@@ -176,7 +176,8 @@ const updateRestaurantCommission = asyncHandler(async (req, res) => {
  * @access  Admin
  */
 const toggleMenuItemActive = asyncHandler(async (req, res) => {
-  const menuItem = await adminService.toggleMenuItemActive(req.params.id);
+  const { isActive } = req.body;
+  const menuItem = await adminService.toggleMenuItemActive(req.params.id, isActive);
 
   res.status(200).json({
     success: true,

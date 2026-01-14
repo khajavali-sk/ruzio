@@ -219,15 +219,18 @@ const updateRestaurantCommission = async (restaurantId, commissionPercentage) =>
 
 /**
  * Toggle menu item active status (admin override)
+ * @param {string} itemId - Menu item ID
+ * @param {boolean} isActive - Optional explicit active state (if not provided, toggles current state)
  */
-const toggleMenuItemActive = async (itemId) => {
+const toggleMenuItemActive = async (itemId, isActive = null) => {
   const menuItem = await MenuItem.findById(itemId);
   
   if (!menuItem) {
     throw new ApiError('Menu item not found', 404);
   }
 
-  menuItem.isActive = !menuItem.isActive;
+  // If isActive is explicitly provided, use it; otherwise toggle
+  menuItem.isActive = isActive !== null ? isActive : !menuItem.isActive;
   await menuItem.save();
 
   return menuItem;
