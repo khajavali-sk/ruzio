@@ -60,9 +60,9 @@ export const adminAPI = {
   unblockUser: (id) => api.put(`/admin/users/${id}/unblock`),
   getRestaurants: () => api.get('/admin/restaurants'),
   approveRestaurant: (id) => api.put(`/admin/restaurants/${id}/approve`),
-  updateRestaurantCommission: (id, data) => api.put(`/admin/restaurants/${id}/commission`, data),
-  getMenuItems: (restaurantId) => api.get('/admin/menu-items', { params: { restaurantId } }),
-  toggleMenuItemActive: (id) => api.put(`/admin/menu-items/${id}/toggle`),
+  updateRestaurantCommission: (id, commission) => api.put(`/admin/restaurants/${id}/commission`, { commissionPercentage: commission }),
+  getMenuItems: () => api.get('/admin/menu-items'),
+  toggleMenuItem: (id, isActive) => api.put(`/admin/menu-items/${id}/toggle`, { isActive }),
   getOrders: (params) => api.get('/admin/orders', { params }),
   getEarnings: () => api.get('/admin/earnings')
 };
@@ -102,7 +102,7 @@ export const orderAPI = {
   getMyOrders: () => api.get('/orders/my-orders'),
   getById: (id) => api.get(`/orders/${id}`),
   cancel: (id) => api.put(`/orders/${id}/cancel`),
-  rate: (id, data) => api.post(`/orders/${id}/rate`, data)
+  submitRating: (id, data) => api.post(`/orders/${id}/rate`, data)
 };
 
 // ============ Delivery API ============
