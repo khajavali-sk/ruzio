@@ -188,16 +188,24 @@ const deleteMenuItem = async (itemId, ownerId) => {
 };
 
 /**
- * Get menu items for a restaurant
+ * Get menu items for a restaurant (public)
  */
 const getMenuItems = async (restaurantId, includeUnavailable = false) => {
-  const query = { restaurant: restaurantId };
+  const query = { restaurant: restaurantId, isActive: true };
   
   if (!includeUnavailable) {
     query.isAvailable = true;
   }
 
   const menuItems = await MenuItem.find(query).sort({ category: 1, name: 1 });
+  return menuItems;
+};
+
+/**
+ * Get menu items for restaurant owner (includes all items)
+ */
+const getMenuItemsForOwner = async (restaurantId) => {
+  const menuItems = await MenuItem.find({ restaurant: restaurantId }).sort({ category: 1, name: 1 });
   return menuItems;
 };
 
@@ -326,23 +334,25 @@ const updateOrderStatus = async (orderId, restaurantId, newStatus) => {
 };
 
 /**
- * Get restaurant statistics
+ * Get restaurant statistics with earnings breakdown
  */
 const getRestaurantStats = async (restaurantId) => {
-  const orders = await Order.find({
+  const deliveredOrders = await Order.find({
     restaurant: restaurantId,
     status: ORDER_STATUS.DELIVERED
   });
 
   const stats = {
-    totalOrders: orders.length,
-    totalEarnings: 0,
-    totalCommissionPaid: 0
+    totalOrders: deliveredOrders.length,
+    grossSales: 0,
+    totalCommissionPaid: 0,
+    totalEarnings: 0
   };
 
-  orders.forEach(order => {
-    stats.totalEarnings += order.restaurantEarning;
+  deliveredOrders.forEach(order => {
+    stats.grossSales += order.itemsTotal;
     stats.totalCommissionPaid += order.adminCommission;
+    stats.totalEarnings += order.restaurantEarning;
   });
 
   // Get pending orders count
@@ -351,7 +361,27 @@ const getRestaurantStats = async (restaurantId) => {
     status: ORDER_STATUS.PENDING
   });
 
+  // Get average rating
+  const restaurant = await Restaurant.findById(restaurantId);
+  stats.rating = restaurant?.rating || 0;
+  stats.ratingCount = restaurant?.ratingCount || 0;
+
   return stats;
+};
+
+/**
+ * Get restaurant reviews
+ */
+const getRestaurantReviews = async (restaurantId) => {
+  const reviews = await Order.find({
+    restaurant: restaurantId,
+    rating: { $exists: true, $ne: null }
+  })
+  .select('rating review reviewedAt customer orderNumber')
+  .populate('customer', 'name')
+  .sort({ reviewedAt: -1 });
+
+  return reviews;
 };
 
 module.exports = {
@@ -366,10 +396,12 @@ module.exports = {
   updateMenuItem,
   deleteMenuItem,
   getMenuItems,
+  getMenuItemsForOwner,
   toggleItemAvailability,
   getRestaurantOrders,
   acceptOrder,
   rejectOrder,
   updateOrderStatus,
-  getRestaurantStats
+  getRestaurantStats,
+  getRestaurantReviews
 };
